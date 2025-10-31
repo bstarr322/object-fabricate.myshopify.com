@@ -42,57 +42,99 @@
       assign current_video = block.settings.video
     %}
     
-    {%- if media_type == 'image' and current_image != blank -%}
-      {{
-        current_image
-        | image_url: width: 3840
-        | image_tag:
-          width: current_image.width,
-          widths: widths,
-          height: current_image.height,
-          alt: current_image.alt,
-          class: 'hero__image',
-          sizes: sizes,
-          fetchpriority: fetch_priority
-      }}
-    {%- elsif media_type == 'video' and current_video != blank -%}
-      <div class="hero__video-wrapper">
-        {%- if current_video.preview_image -%}
-          {% liquid
-            assign fetch_priority_poster = false
-            if section.index == 1 and forloop.first
-              assign fetch_priority_poster = 'high'
-            endif
-          %}
-          {{
-            current_video.preview_image
-            | image_url: width: 3840
-            | image_tag:
-              width: current_video.preview_image.width,
-              widths: widths,
-              height: current_video.preview_image.height,
-              alt: current_video.alt,
-              class: 'hero__video-poster',
-              sizes: sizes,
-              fetchpriority: fetch_priority_poster
-          }}
-        {%- endif -%}
+    <div class="hero__media-item" {{ block.shopify_attributes }}>
+      {%- if media_type == 'image' and current_image != blank -%}
         {{
-          current_video
-          | video_tag:
-            poster: nil,
-            autoplay: true,
-            loop: true,
-            controls: false,
-            muted: true,
-            class: 'hero__video'
+          current_image
+          | image_url: width: 3840
+          | image_tag:
+            width: current_image.width,
+            widths: widths,
+            height: current_image.height,
+            alt: current_image.alt,
+            class: 'hero__image',
+            sizes: sizes,
+            fetchpriority: fetch_priority
         }}
-      </div>
-    {%- endif -%}
+      {%- elsif media_type == 'video' and current_video != blank -%}
+        <div class="hero__video-wrapper">
+          {%- if current_video.preview_image -%}
+            {% liquid
+              assign fetch_priority_poster = false
+              if section.index == 1 and forloop.first
+                assign fetch_priority_poster = 'high'
+              endif
+            %}
+            {{
+              current_video.preview_image
+              | image_url: width: 3840
+              | image_tag:
+                width: current_video.preview_image.width,
+                widths: widths,
+                height: current_video.preview_image.height,
+                alt: current_video.alt,
+                class: 'hero__video-poster',
+                sizes: sizes,
+                fetchpriority: fetch_priority_poster
+            }}
+          {%- endif -%}
+          {{
+            current_video
+            | video_tag:
+              poster: nil,
+              autoplay: true,
+              loop: true,
+              controls: false,
+              muted: true,
+              class: 'hero__video'
+          }}
+        </div>
+      {%- endif -%}
+      
+      {%- if block.settings.heading != blank or block.settings.button_label != blank -%}
+        <div class="hero__media-content">
+          {%- if block.settings.heading != blank -%}
+            <div class="hero__heading text-block {{ block.settings.heading_size }}" style="
+              --font-family: var(--font-{{ block.settings.heading_font }}--family);
+              --font-weight: var(--font-{{ block.settings.heading_font }}--weight);
+              --text-align: {{ block.settings.heading_alignment }};
+              {%- if block.settings.heading_color != blank -%}
+                --color: {{ block.settings.heading_color }};
+                color: {{ block.settings.heading_color }};
+              {%- else -%}
+                {%- if block.settings.heading_font == 'body' -%}
+                  --color: var(--color-foreground);
+                  color: var(--color-foreground);
+                {%- else -%}
+                  --color: var(--color-foreground-heading);
+                  color: var(--color-foreground-heading);
+                {%- endif -%}
+              {%- endif -%}
+            ">
+              {{ block.settings.heading }}
+            </div>
+          {%- endif -%}
+          
+          {%- if block.settings.button_label != blank -%}
+            <a
+              href="{{ block.settings.button_link | default: '#' }}"
+              class="hero__button button button--{{ block.settings.button_style }}"
+              {% if block.settings.button_link == blank %}
+                role="button"
+              {% endif %}
+            >
+              {{ block.settings.button_label }}
+            </a>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+    </div>
   {%- endfor -%}
 
   {% if media_blocks.size == 0 %}
-    {{ 'hero-apparel-1' | placeholder_svg_tag: 'hero__image' }}
+    <div class="hero__media-item">
+      {{ 'hero-apparel-1' | placeholder_svg_tag: 'hero__image' }}
+    </div>
   {%- endif -%}
 {% endcapture %}
 
@@ -154,9 +196,7 @@
   {% endcomment %}
 
   <div
-    class="hero__container spacing-style section section--full-width"
-    style="      {% render 'spacing-style', settings: section.settings %}"
-  >
+    class="hero__container section section--full-width">
     {%- if section.settings.link != blank -%}
       <a
         href="{{ section.settings.link }}"
@@ -178,68 +218,7 @@
       {{ media }}
     </div>
     
-    {%- if media_blocks.size > 0 -%}
-      {%- for block in media_blocks -%}
-        {%- if block.settings.heading != blank or block.settings.button_label != blank -%}
-          <div
-            class="hero__slide-content hero__slide-content--{{ forloop.index }}"
-            style="--slide-index: {{ forloop.index0 }};"
-            {{ block.shopify_attributes }}
-          >
-            <div
-              class="
-                hero__content-wrapper
-                layout-panel-flex
-                layout-panel-flex--column
-                section-content-wrapper
-                {{section.settings.section_width}}
-                {% if request.design_mode %}hero__content-wrapper--design-mode{% endif %}
-              "
-              style="
-                --vertical-alignment: {{ block.settings.vertical_alignment }};
-                --horizontal-alignment-mobile: {{ block.settings.horizontal_alignment }};
-                --horizontal-alignment: {{ block.settings.horizontal_alignment }};
-                --gap: {{ block.settings.content_gap }}px;
-              "
-            >
-              {%- if block.settings.heading != blank -%}
-                <div class="hero__heading text-block {{ block.settings.heading_size }}" style="
-                  --font-family: var(--font-{{ block.settings.heading_font }}--family);
-                  --font-weight: var(--font-{{ block.settings.heading_font }}--weight);
-                  --text-align: {{ block.settings.heading_alignment }};
-                  {%- if block.settings.heading_color != blank -%}
-                    --color: {{ block.settings.heading_color }};
-                    color: {{ block.settings.heading_color }};
-                  {%- else -%}
-                    {%- if block.settings.heading_font == 'body' -%}
-                      --color: var(--color-foreground);
-                      color: var(--color-foreground);
-                    {%- else -%}
-                      --color: var(--color-foreground-heading);
-                      color: var(--color-foreground-heading);
-                    {%- endif -%}
-                  {%- endif -%}
-                ">
-                  {{ block.settings.heading }}
-                </div>
-              {%- endif -%}
-              
-              {%- if block.settings.button_label != blank -%}
-                <a
-                  href="{{ block.settings.button_link | default: '#' }}"
-                  class="hero__button button button--{{ block.settings.button_style }}"
-                  {% if block.settings.button_link == blank %}
-                    role="button"
-                  {% endif %}
-                >
-                  {{ block.settings.button_label }}
-                </a>
-              {%- endif -%}
-            </div>
-          </div>
-        {%- endif -%}
-      {%- endfor -%}
-    {%- else -%}
+    {%- if media_blocks.size == 0 -%}
       <div
         class="
           hero__content-wrapper
@@ -312,7 +291,19 @@
     inset: 0;
     display: grid;
     grid-column: 1 / -1;
-    grid-template-columns: repeat(var(--hero-media-count, 1), 1fr);
+    grid-template-columns: 1fr;
+    
+    @media screen and (min-width: 750px) {
+      grid-template-columns: repeat(var(--hero-media-count, 1), 1fr);
+    }
+  }
+
+  .hero__media-item {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
   }
 
   .hero--auto .hero__image,
@@ -340,16 +331,44 @@
     object-fit: cover;
     object-position: center center;
     overflow: hidden;
-    position: relative;
+    position: absolute;
+    inset: 0;
     z-index: var(--layer-base);
   }
 
   .hero__video-wrapper {
-    position: relative;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
 
   .hero__video-poster {
     position: absolute;
+  }
+
+  .hero__media-content {
+    position: relative;
+    z-index: var(--layer-flat);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: var(--spacing-6);
+    width: 100%;
+    text-align: center;
+    pointer-events: none;
+    padding: 16px 16px 48px;
+    max-width: 620px;
+
+    @media screen and (min-width: 1024px) {
+      padding-bottom: 15%;
+    }
+
+    :is(a, button) {
+      pointer-events: auto;
+    }
   }
 
   .hero__link {
@@ -369,33 +388,6 @@
 
   .hero__content-wrapper--design-mode * {
     pointer-events: auto;
-  }
-
-  .hero__slide-content {
-    position: absolute;
-    inset: 0;
-    z-index: var(--layer-flat);
-    pointer-events: none;
-    display: grid;
-    grid-template-columns: var(--grid-template-columns);
-    
-    /* Position each slide content based on its index */
-    left: calc(var(--slide-index) * (100% / var(--hero-media-count)));
-    width: calc(100% / var(--hero-media-count));
-
-    .hero__content-wrapper {
-      align-items: var(--vertical-alignment);
-      justify-content: var(--horizontal-alignment-mobile);
-      text-align: center;
-
-      @media screen and (min-width: 750px) {
-        justify-content: var(--horizontal-alignment);
-      }
-    }
-
-    :is(a, button) {
-      pointer-events: auto;
-    }
   }
 
   .hero__heading {
@@ -673,60 +665,6 @@
             }
           ],
           "default": "primary"
-        },
-        {
-          "type": "header",
-          "content": "Position"
-        },
-        {
-          "type": "select",
-          "id": "horizontal_alignment",
-          "label": "Horizontal Alignment",
-          "options": [
-            {
-              "value": "flex-start",
-              "label": "Left"
-            },
-            {
-              "value": "center",
-              "label": "Center"
-            },
-            {
-              "value": "flex-end",
-              "label": "Right"
-            }
-          ],
-          "default": "center"
-        },
-        {
-          "type": "select",
-          "id": "vertical_alignment",
-          "label": "Vertical Alignment",
-          "options": [
-            {
-              "value": "flex-start",
-              "label": "Top"
-            },
-            {
-              "value": "center",
-              "label": "Center"
-            },
-            {
-              "value": "flex-end",
-              "label": "Bottom"
-            }
-          ],
-          "default": "center"
-        },
-        {
-          "type": "range",
-          "id": "content_gap",
-          "label": "Content Gap",
-          "min": 0,
-          "max": 100,
-          "step": 4,
-          "unit": "px",
-          "default": 16
         }
       ]
     }
@@ -1059,9 +997,7 @@
             "heading_font": "primary",
             "heading_alignment": "center",
             "button_label": "Shop Now",
-            "button_link": "shopify://collections/all",
-            "horizontal_alignment": "center",
-            "vertical_alignment": "center"
+            "button_link": "shopify://collections/all"
           }
         }
       ],
@@ -1087,10 +1023,7 @@
             "heading_font": "primary",
             "heading_alignment": "center",
             "button_label": "Shop Spring",
-            "button_link": "",
-            "horizontal_alignment": "center",
-            "vertical_alignment": "flex-end",
-            "content_gap": 16
+            "button_link": ""
           }
         },
         {
@@ -1102,10 +1035,7 @@
             "heading_font": "primary",
             "heading_alignment": "center",
             "button_label": "Shop Summer",
-            "button_link": "",
-            "horizontal_alignment": "center",
-            "vertical_alignment": "flex-end",
-            "content_gap": 16
+            "button_link": ""
           }
         }
       ],

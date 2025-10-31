@@ -4287,3 +4287,25 @@ text-component {
 :root {
   --font-size--h2: clamp(2.25rem, 4.8vw, 2.5rem);
 }
+
+/* Hero Media Items - Mobile Stacking */
+@media screen and (max-width: 749px) {
+  .hero__media-wrapper {
+    position: relative !important;
+  }
+
+  .hero__media-item {
+    min-height: 50vh;
+  }
+
+  .hero__media-content {
+    padding: var(--spacing-6) var(--spacing-4);
+  }
+}
+
+/* Hero Media Items - Desktop Side by Side */
+@media screen and (min-width: 750px) {
+  .hero__media-item {
+    min-height: 100%;
+  }
+}
