@@ -4284,3 +4284,6 @@ text-component {
   }
 }
 
+:root {
+  --font-size--h2: clamp(2.25rem, 4.8vw, 2.5rem);
+}
