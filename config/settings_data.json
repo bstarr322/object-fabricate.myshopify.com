@@ -40,7 +40,7 @@
     "card_hover_effect": "scale",
     "badge_position": "top-right",
     "badge_corner_radius": 100,
-    "badge_sale_color_scheme": "scheme-1",
+    "badge_sale_color_scheme": "scheme-7",
     "badge_sold_out_color_scheme": "scheme-3",
     "badge_text_transform": "none",
     "primary_button_border_width": 0,
@@ -78,41 +78,41 @@
     "color_schemes": {
       "scheme-1": {
         "settings": {
-          "background": "#d9bca317",
-          "foreground_heading": "#a67c7c",
-          "foreground": "#73524f",
-          "primary": "#a8938e",
-          "primary_hover": "#7e6969",
-          "border": "#0000000f",
-          "shadow": "#d9bca3",
-          "primary_button_background": "#73524f",
+          "background": "#fcf9f7",
+          "foreground_heading": "#000000",
+          "foreground": "#000000",
+          "primary": "#000000",
+          "primary_hover": "#00000087",
+          "border": "#e6e6e6",
+          "shadow": "#000000",
+          "primary_button_background": "#a67c7c",
           "primary_button_text": "#ffffff",
-          "primary_button_border": "#7e6969",
-          "primary_button_hover_background": "#f2cdc4",
+          "primary_button_border": "#a67c7c",
+          "primary_button_hover_background": "#c29898",
           "primary_button_hover_text": "#ffffff",
-          "primary_button_hover_border": "#f2cdc4",
-          "secondary_button_background": "#a8938e",
-          "secondary_button_text": "#ffffff",
-          "secondary_button_border": "#d9bca3",
-          "secondary_button_hover_background": "#d9bca3",
-          "secondary_button_hover_text": "#ffffff",
-          "secondary_button_hover_border": "#d9bca3",
-          "input_background": "#a67c7c",
-          "input_text_color": "#ffffff",
-          "input_border_color": "#a67c7c",
-          "input_hover_background": "#a67c7c99",
+          "primary_button_hover_border": "#c29898",
+          "secondary_button_background": "rgba(0,0,0,0)",
+          "secondary_button_text": "#000000",
+          "secondary_button_border": "#000000",
+          "secondary_button_hover_background": "#fafafa",
+          "secondary_button_hover_text": "#333333",
+          "secondary_button_hover_border": "#333333",
+          "input_background": "#ffffff",
+          "input_text_color": "#00000087",
+          "input_border_color": "#00000021",
+          "input_hover_background": "#fafafa",
           "variant_background_color": "#ffffff",
-          "variant_text_color": "#73524f",
-          "variant_border_color": "#00000021",
+          "variant_text_color": "#000000",
+          "variant_border_color": "#e6e6e6",
           "variant_hover_background_color": "#f5f5f5",
-          "variant_hover_text_color": "#a8938e",
+          "variant_hover_text_color": "#000000",
           "variant_hover_border_color": "#e6e6e6",
-          "selected_variant_background_color": "#a67c7c",
+          "selected_variant_background_color": "#000000",
           "selected_variant_text_color": "#ffffff",
-          "selected_variant_border_color": "#7e6969",
-          "selected_variant_hover_background_color": "#7e6969",
+          "selected_variant_border_color": "#000000",
+          "selected_variant_hover_background_color": "#1a1a1a",
           "selected_variant_hover_text_color": "#ffffff",
-          "selected_variant_hover_border_color": "#7e6969"
+          "selected_variant_hover_border_color": "#1a1a1a"
         }
       },
       "scheme-2": {
@@ -310,9 +310,9 @@
           "selected_variant_hover_border_color": "#1a1a1a"
         }
       },
-      "scheme-58084d4c-a86e-4d0a-855e-a0966e5043f7": {
+      "scheme-7": {
         "settings": {
-          "background": "rgba(0,0,0,0)",
+          "background": "#ffffff",
           "foreground_heading": "#000000",
           "foreground": "#000000",
           "primary": "#000000",
@@ -354,7 +354,7 @@
   "presets": {
     "Horizon": {
       "color_schemes": {
-        "scheme-1": {
+        "scheme-7": {
           "settings": {
             "background": "#ffffff",
             "foreground_heading": "#000000",
@@ -588,7 +588,7 @@
             "selected_variant_hover_border_color": "#1a1a1a"
           }
         },
-        "scheme-58084d4c-a86e-4d0a-855e-a0966e5043f7": {
+        "scheme-1": {
           "settings": {
             "background": "rgba(0,0,0,0)",
             "foreground_heading": "#000000",
