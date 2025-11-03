@@ -1,9 +1,15 @@
 
 
 {% liquid
-  assign media_count = 0
-  if section.settings.image_1 != blank and section.settings.image_2 != blank
-    assign media_width_desktop = 100 | divided_by: 2 | append: 'vw'
+  assign media_blocks = section.blocks | where: 'type', 'media'
+  assign media_count = media_blocks.size
+  
+  if media_count == 0
+    assign media_count = 1
+  endif
+  
+  if media_count > 1
+    assign media_width_desktop = 100 | divided_by: media_count | append: 'vw'
   else
     assign media_width_desktop = '100vw'
   endif
@@ -11,180 +17,144 @@
   assign sizes = '(min-width: 750px) ' | append: media_width_desktop | append: ', ' | append: media_width_mobile
   assign widths = '832, 1200, 1600, 1920, 2560, 3840'
 
-  assign has_image_1 = false
-  assign has_image_2 = false
-  assign has_video_1 = false
-  assign has_video_2 = false
-  assign has_image = false
-  assign has_video = false
   assign has_video_multiple = false
-  assign has_media = false
-  assign media_type_1 = section.settings.media_type_1
-  assign media_type_2 = section.settings.media_type_2
-  if section.settings.image_1 != blank and media_type_1 == 'image'
-    assign has_image_1 = true
-  endif
-  if section.settings.image_2 != blank and media_type_2 == 'image'
-    assign has_image_2 = true
-  endif
-  if section.settings.video_1 != blank and media_type_1 == 'video'
-    assign has_video_1 = true
-  endif
-  if section.settings.video_2 != blank and media_type_2 == 'video'
-    assign has_video_2 = true
-  endif
-
-  if has_image_1 or has_image_2
-    assign has_image = true
-  endif
-  if has_video_1 or has_video_2
-    assign has_video = true
-  endif
-  if media_type_1 == 'video' and media_type_2 == 'video'
+  assign video_count = 0
+  for block in media_blocks
+    if block.settings.media_type == 'video' and block.settings.video != blank
+      assign video_count = video_count | plus: 1
+    endif
+  endfor
+  if video_count > 1
     assign has_video_multiple = true
-  endif
-  if has_image or has_video
-    assign has_media = true
   endif
 
   assign fetch_priority = 'auto'
-
   if section.index == 1
     assign fetch_priority = 'high'
   endif
 %}
 
 {% capture media %}
-  {%- if has_image_1 -%}
-    {% assign media_count = media_count | plus: 1 %}
-    {{
-      section.settings.image_1
-      | image_url: width: 3840
-      | image_tag:
-        width: section.settings.image_1.width,
-        widths: widths,
-        height: section.settings.image_1.height,
-        alt: section.settings.image_1.alt,
-        class: 'hero__image',
-        sizes: sizes,
-        fetchpriority: fetch_priority
-    }}
-  {%- endif -%}
-
-  {%- if has_video_1 -%}
-    {% assign media_count = media_count | plus: 1 %}
-    <div class="hero__video-wrapper">
-      {%- if section.settings.video_1.preview_image -%}
-        {% liquid
-          assign fetch_priority_poster = false
-          if section.index == 1
-            assign fetch_priority_poster = 'high'
-          endif
-        %}
+  {%- for block in media_blocks -%}
+    {% liquid
+      assign media_type = block.settings.media_type
+      assign current_image = block.settings.image
+      assign current_video = block.settings.video
+    %}
+    
+    <div class="hero__media-item" {{ block.shopify_attributes }}>
+      {%- if media_type == 'image' and current_image != blank -%}
         {{
-          section.settings.video_1.preview_image
+          current_image
           | image_url: width: 3840
           | image_tag:
-            width: section.settings.video_1.preview_image.width,
+            width: current_image.width,
             widths: widths,
-            height: section.settings.video_1.preview_image.height,
-            alt: section.settings.video_1.alt,
-            class: 'hero__video-poster',
+            height: current_image.height,
+            alt: current_image.alt,
+            class: 'hero__image',
             sizes: sizes,
-            fetchpriority: fetch_priority_poster
+            fetchpriority: fetch_priority
         }}
+      {%- elsif media_type == 'video' and current_video != blank -%}
+        <div class="hero__video-wrapper">
+          {%- if current_video.preview_image -%}
+            {% liquid
+              assign fetch_priority_poster = false
+              if section.index == 1 and forloop.first
+                assign fetch_priority_poster = 'high'
+              endif
+            %}
+            {{
+              current_video.preview_image
+              | image_url: width: 3840
+              | image_tag:
+                width: current_video.preview_image.width,
+                widths: widths,
+                height: current_video.preview_image.height,
+                alt: current_video.alt,
+                class: 'hero__video-poster',
+                sizes: sizes,
+                fetchpriority: fetch_priority_poster
+            }}
+          {%- endif -%}
+          {{
+            current_video
+            | video_tag:
+              poster: nil,
+              autoplay: true,
+              loop: true,
+              controls: false,
+              muted: true,
+              class: 'hero__video'
+          }}
+        </div>
       {%- endif -%}
-      {{
-        section.settings.video_1
-        | video_tag:
-          poster: nil,
-          autoplay: true,
-          loop: true,
-          controls: false,
-          muted: true,
-          class: 'hero__video'
-      }}
-    </div>
-  {%- endif -%}
-
-  {%- if has_image_2 -%}
-    {% assign media_count = media_count | plus: 1 %}
-    {{
-      section.settings.image_2
-      | image_url: width: 3840
-      | image_tag:
-        width: section.settings.image_2.width,
-        widths: widths,
-        height: section.settings.image_2.height,
-        alt: section.settings.image_2.alt,
-        class: 'hero__image',
-        sizes: sizes,
-        fetchpriority: fetch_priority
-    }}
-  {%- endif -%}
-
-  {%- if has_video_2 -%}
-    {% assign media_count = media_count | plus: 1 %}
-    <div class="hero__video-wrapper">
-      {%- if section.settings.video_2.preview_image -%}
-        {{
-          section.settings.video_2.preview_image
-          | image_url: width: 3840
-          | image_tag:
-            width: section.settings.video_2.preview_image.width,
-            widths: widths,
-            height: section.settings.video_2.preview_image.height,
-            alt: section.settings.video_2.alt,
-            class: 'hero__video-poster',
-            sizes: sizes
-        }}
+      
+      {%- if block.settings.heading != blank or block.settings.button_label != blank -%}
+        <div class="hero__media-content">
+          {%- if block.settings.heading != blank -%}
+            <div class="hero__heading text-block {{ block.settings.heading_size }}" style="
+              --font-family: var(--font-{{ block.settings.heading_font }}--family);
+              --font-weight: var(--font-{{ block.settings.heading_font }}--weight);
+              --text-align: {{ block.settings.heading_alignment }};
+              {%- if block.settings.heading_color != blank -%}
+                --color: {{ block.settings.heading_color }};
+                color: {{ block.settings.heading_color }};
+              {%- else -%}
+                {%- if block.settings.heading_font == 'body' -%}
+                  --color: var(--color-foreground);
+                  color: var(--color-foreground);
+                {%- else -%}
+                  --color: var(--color-foreground-heading);
+                  color: var(--color-foreground-heading);
+                {%- endif -%}
+              {%- endif -%}
+            ">
+              {{ block.settings.heading }}
+            </div>
+          {%- endif -%}
+          
+          {%- if block.settings.button_label != blank -%}
+            <a
+              href="{{ block.settings.button_link | default: '#' }}"
+              class="hero__button button button--{{ block.settings.button_style }}"
+              {% if block.settings.button_link == blank %}
+                role="button"
+              {% endif %}
+            >
+              {{ block.settings.button_label }}
+            </a>
+          {%- endif -%}
+        </div>
       {%- endif -%}
-      {{
-        section.settings.video_2
-        | video_tag:
-          poster: nil,
-          autoplay: true,
-          loop: true,
-          controls: false,
-          muted: true,
-          class: 'hero__video'
-      }}
     </div>
-  {%- endif -%}
+  {%- endfor -%}
 
-  {% if has_media == false %}
-    {{ 'hero-apparel-1' | placeholder_svg_tag: 'hero__image' }}
+  {% if media_blocks.size == 0 %}
+    <div class="hero__media-item">
+      {{ 'hero-apparel-1' | placeholder_svg_tag: 'hero__image' }}
+    </div>
   {%- endif -%}
 {% endcapture %}
 
 {% capture media_blurred %}
-  {% if has_image_1 %}
-    {{
-      section.settings.image_1
-      | image_url: width: 3840
-      | image_tag:
-        width: section.settings.image_1.width,
-        widths: widths,
-        height: section.settings.image_1.height,
-        alt: '',
-        class: 'hero__image',
-        sizes: sizes
-    }}
-  {% endif %}
-  {% if has_image_2 %}
-    {{
-      section.settings.image_2
-      | image_url: width: 3840
-      | image_tag:
-        width: section.settings.image_2.width,
-        widths: widths,
-        height: section.settings.image_2.height,
-        alt: '',
-        class: 'hero__image',
-        sizes: sizes
-    }}
-  {% endif %}
-  {% if has_media == false %}
+  {%- for block in media_blocks -%}
+    {% if block.settings.media_type == 'image' and block.settings.image != blank %}
+      {{
+        block.settings.image
+        | image_url: width: 3840
+        | image_tag:
+          width: block.settings.image.width,
+          widths: widths,
+          height: block.settings.image.height,
+          alt: '',
+          class: 'hero__image',
+          sizes: sizes
+      }}
+    {% endif %}
+  {%- endfor -%}
+  {% if media_blocks.size == 0 %}
     {{ 'hero-apparel-1' | placeholder_svg_tag: 'hero__image' }}
   {% endif %}
 {% endcapture %}
@@ -226,9 +196,7 @@
   {% endcomment %}
 
   <div
-    class="hero__container spacing-style section section--full-width"
-    style="      {% render 'spacing-style', settings: section.settings %}"
-  >
+    class="hero__container section section--full-width">
     {%- if section.settings.link != blank -%}
       <a
         href="{{ section.settings.link }}"
@@ -240,7 +208,7 @@
     {%- endif -%}
     <div
       class="hero__media-wrapper"
-      style="--hero-media-count: {{ media_count }};{%- if section.settings.image_1 != blank -%} --hero-media-aspect-ratio: {{ section.settings.image_1.aspect_ratio }};{% endif %}"
+      style="--hero-media-count: {{ media_count }};{%- if media_blocks.size > 0 and media_blocks.first.settings.image != blank -%} --hero-media-aspect-ratio: {{ media_blocks.first.settings.image.aspect_ratio }};{% endif %}"
     >
       {% liquid
         if section.settings.toggle_overlay
@@ -249,20 +217,23 @@
       %}
       {{ media }}
     </div>
-    <div
-      class="
-        hero__content-wrapper
-        layout-panel-flex
-        layout-panel-flex--{{ section.settings.content_direction }}
-        {% if section.settings.vertical_on_mobile %}mobile-column{% endif %}
-        section-content-wrapper
-        {{section.settings.section_width}}
-        {% if request.design_mode %}hero__content-wrapper--design-mode{% endif %}
-      "
-      style="{% render 'layout-panel-style', settings: section.settings %}"
-    >
-      {% content_for 'blocks' %}
-    </div>
+    
+    {%- if media_blocks.size == 0 -%}
+      <div
+        class="
+          hero__content-wrapper
+          layout-panel-flex
+          layout-panel-flex--{{ section.settings.content_direction }}
+          {% if section.settings.vertical_on_mobile %}mobile-column{% endif %}
+          section-content-wrapper
+          {{section.settings.section_width}}
+          {% if request.design_mode %}hero__content-wrapper--design-mode{% endif %}
+        "
+        style="{% render 'layout-panel-style', settings: section.settings %}"
+      >
+        {% content_for 'blocks' %}
+      </div>
+    {%- endif -%}
   </div>
 </div>
 
@@ -320,7 +291,19 @@
     inset: 0;
     display: grid;
     grid-column: 1 / -1;
-    grid-template-columns: repeat(var(--hero-media-count, 1), 1fr);
+    grid-template-columns: 1fr;
+    
+    @media screen and (min-width: 750px) {
+      grid-template-columns: repeat(var(--hero-media-count, 1), 1fr);
+    }
+  }
+
+  .hero__media-item {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
   }
 
   .hero--auto .hero__image,
@@ -348,16 +331,44 @@
     object-fit: cover;
     object-position: center center;
     overflow: hidden;
-    position: relative;
+    position: absolute;
+    inset: 0;
     z-index: var(--layer-base);
   }
 
   .hero__video-wrapper {
-    position: relative;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
 
   .hero__video-poster {
     position: absolute;
+  }
+
+  .hero__media-content {
+    position: relative;
+    z-index: var(--layer-flat);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: var(--spacing-6);
+    width: 100%;
+    text-align: center;
+    pointer-events: none;
+    padding: 16px 16px 48px;
+    max-width: 620px;
+
+    @media screen and (min-width: 1024px) {
+      padding-bottom: 15%;
+    }
+
+    :is(a, button) {
+      pointer-events: auto;
+    }
   }
 
   .hero__link {
@@ -377,6 +388,72 @@
 
   .hero__content-wrapper--design-mode * {
     pointer-events: auto;
+  }
+
+  .hero__heading {
+    margin: 0;
+    max-width: 40rem;
+    width: 100%;
+  }
+
+  .hero__heading.text-block {
+    font-family: var(--font-family);
+    font-weight: var(--font-weight);
+    color: var(--color);
+    text-align: var(--text-align);
+    text-wrap: balance;
+  }
+
+  .hero__heading.h1,
+  .hero__heading.h1 > * {
+    font-size: var(--font-h1--size);
+    line-height: var(--font-h1--line-height);
+    letter-spacing: var(--font-h1--letter-spacing);
+    margin-block: var(--font-h1--spacing);
+  }
+
+  .hero__heading.h2,
+  .hero__heading.h2 > * {
+    font-size: var(--font-h2--size);
+    line-height: var(--font-h2--line-height);
+    letter-spacing: var(--font-h2--letter-spacing);
+    margin-block: var(--font-h2--spacing);
+  }
+
+  .hero__heading.h3,
+  .hero__heading.h3 > * {
+    font-size: var(--font-h3--size);
+    line-height: var(--font-h3--line-height);
+    letter-spacing: var(--font-h3--letter-spacing);
+    margin-block: var(--font-h3--spacing);
+  }
+
+  .hero__heading.h4,
+  .hero__heading.h4 > * {
+    font-size: var(--font-h4--size);
+    line-height: var(--font-h4--line-height);
+    letter-spacing: var(--font-h4--letter-spacing);
+    margin-block: var(--font-h4--spacing);
+  }
+
+  .hero__heading.h5,
+  .hero__heading.h5 > * {
+    font-size: var(--font-h5--size);
+    line-height: var(--font-h5--line-height);
+    letter-spacing: var(--font-h5--letter-spacing);
+    margin-block: var(--font-h5--spacing);
+  }
+
+  .hero__heading.h6,
+  .hero__heading.h6 > * {
+    font-size: var(--font-h6--size);
+    line-height: var(--font-h6--line-height);
+    letter-spacing: var(--font-h6--letter-spacing);
+    margin-block: var(--font-h6--spacing);
+  }
+
+  .hero__button {
+    margin: 0;
   }
 
   .hero[data-blur-shadow='true'] {
@@ -440,98 +517,162 @@
   "class": "hero-wrapper section-wrapper",
   "blocks": [
     {
-      "type": "@theme"
-    },
-    {
-      "type": "text"
-    },
-    {
-      "type": "button"
-    },
-    {
-      "type": "logo"
-    },
-    {
-      "type": "jumbo-text"
-    },
-    {
-      "type": "spacer"
-    },
-    {
-      "type": "group"
-    },
-    {
-      "type": "_marquee"
+      "type": "media",
+      "name": "Media Slide",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Media"
+        },
+        {
+          "type": "select",
+          "id": "media_type",
+          "label": "t:settings.type",
+          "options": [
+            {
+              "value": "image",
+              "label": "t:options.image"
+            },
+            {
+              "value": "video",
+              "label": "t:options.video"
+            }
+          ],
+          "default": "image"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:settings.image",
+          "visible_if": "{{ block.settings.media_type == 'image' }}"
+        },
+        {
+          "type": "video",
+          "id": "video",
+          "label": "t:settings.video",
+          "visible_if": "{{ block.settings.media_type == 'video' }}"
+        },
+        {
+          "type": "header",
+          "content": "Content"
+        },
+        {
+          "type": "richtext",
+          "id": "heading",
+          "label": "Heading",
+          "default": "<p>New Arrivals</p>"
+        },
+        {
+          "type": "select",
+          "id": "heading_size",
+          "label": "Heading Size",
+          "options": [
+            {
+              "value": "h1",
+              "label": "H1"
+            },
+            {
+              "value": "h2",
+              "label": "H2"
+            },
+            {
+              "value": "h3",
+              "label": "H3"
+            },
+            {
+              "value": "h4",
+              "label": "H4"
+            },
+            {
+              "value": "h5",
+              "label": "H5"
+            },
+            {
+              "value": "h6",
+              "label": "H6"
+            }
+          ],
+          "default": "h1"
+        },
+        {
+          "type": "select",
+          "id": "heading_font",
+          "label": "Heading Font",
+          "options": [
+            {
+              "value": "primary",
+              "label": "Primary"
+            },
+            {
+              "value": "accent",
+              "label": "Accent"
+            },
+            {
+              "value": "body",
+              "label": "Body"
+            }
+          ],
+          "default": "primary"
+        },
+        {
+          "type": "color",
+          "id": "heading_color",
+          "label": "Heading Color"
+        },
+        {
+          "type": "select",
+          "id": "heading_alignment",
+          "label": "Heading Alignment",
+          "options": [
+            {
+              "value": "left",
+              "label": "Left"
+            },
+            {
+              "value": "center",
+              "label": "Center"
+            },
+            {
+              "value": "right",
+              "label": "Right"
+            }
+          ],
+          "default": "center"
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Button Label",
+          "default": "Shop Now"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Button Link"
+        },
+        {
+          "type": "select",
+          "id": "button_style",
+          "label": "Button Style",
+          "options": [
+            {
+              "value": "primary",
+              "label": "Primary"
+            },
+            {
+              "value": "secondary",
+              "label": "Secondary"
+            }
+          ],
+          "default": "primary"
+        }
+      ]
     }
   ],
   "disabled_on": {
     "groups": ["header"]
   },
   "settings": [
-    {
-      "type": "header",
-      "content": "t:content.media"
-    },
-    {
-      "type": "select",
-      "id": "media_type_1",
-      "label": "t:settings.type",
-      "options": [
-        {
-          "value": "image",
-          "label": "t:options.image"
-        },
-        {
-          "value": "video",
-          "label": "t:options.video"
-        }
-      ],
-      "default": "image"
-    },
-    {
-      "type": "image_picker",
-      "id": "image_1",
-      "label": "t:settings.image",
-      "visible_if": "{{ section.settings.media_type_1 == 'image' }}"
-    },
-    {
-      "type": "video",
-      "id": "video_1",
-      "label": "t:settings.video",
-      "visible_if": "{{ section.settings.media_type_1 == 'video' }}"
-    },
-    {
-      "type": "header",
-      "content": "t:content.media_2"
-    },
-    {
-      "type": "select",
-      "id": "media_type_2",
-      "label": "t:settings.type",
-      "options": [
-        {
-          "value": "image",
-          "label": "t:options.image"
-        },
-        {
-          "value": "video",
-          "label": "t:options.video"
-        }
-      ],
-      "default": "image"
-    },
-    {
-      "type": "image_picker",
-      "id": "image_2",
-      "label": "t:settings.image",
-      "visible_if": "{{ section.settings.media_type_2 == 'image' }}"
-    },
-    {
-      "type": "video",
-      "id": "video_2",
-      "label": "t:settings.video",
-      "visible_if": "{{ section.settings.media_type_2 == 'video' }}"
-    },
     {
       "type": "header",
       "content": "t:content.section_link"
@@ -750,7 +891,7 @@
       "type": "color_scheme",
       "id": "color_scheme",
       "label": "t:settings.color_scheme",
-      "default": "scheme-1"
+      "default": "scheme-7"
     },
     {
       "type": "checkbox",
@@ -804,8 +945,7 @@
       "id": "blurred_reflection",
       "label": "t:settings.blurred_reflection",
       "default": false,
-      "info": "t:info.applies_on_image_only",
-      "visible_if": "{{ section.settings.media_type_1 != 'video' or section.settings.media_type_2 != 'video' }}"
+      "info": "t:info.applies_on_image_only"
     },
     {
       "type": "range",
@@ -816,7 +956,7 @@
       "step": 1,
       "unit": "%",
       "default": 75,
-      "visible_if": "{{ section.settings.blurred_reflection and section.settings.media_type_1 != 'video' or section.settings.media_type_2 != 'video' }}"
+      "visible_if": "{{ section.settings.blurred_reflection }}"
     },
     {
       "type": "header",
@@ -847,36 +987,21 @@
     {
       "name": "t:names.hero",
       "category": "t:categories.banners",
-      "blocks": {
-        "text_1": {
-          "type": "text",
+      "blocks": [
+        {
+          "type": "media",
           "settings": {
-            "text": "t:html_defaults.new_arrivals_h1",
-            "type_preset": "h1",
-            "max_width": "narrow"
-          }
-        },
-        "text_2": {
-          "type": "text",
-          "settings": {
-            "text": "t:html_defaults.made_with_care",
-            "max_width": "narrow",
-            "padding-block-end": 32
-          }
-        },
-        "button": {
-          "type": "button",
-          "name": "t:names.button",
-          "settings": {
-            "label": "t:text_defaults.shop_now_button_label",
-            "link": "shopify://collections/all"
+            "media_type": "image",
+            "heading": "<p>New Arrivals</p>",
+            "heading_size": "h1",
+            "heading_font": "primary",
+            "heading_alignment": "center",
+            "button_label": "Shop Now",
+            "button_link": "shopify://collections/all"
           }
         }
-      },
-      "block_order": ["text_1", "text_2", "button"],
+      ],
       "settings": {
-        "horizontal_alignment_flex_direction_column": "center",
-        "gap": 16,
         "section_height": "large",
         "color_scheme": "scheme-5",
         "padding-block-start": 40,
@@ -886,208 +1011,35 @@
       }
     },
     {
-      "name": "t:names.hero_marquee",
+      "name": "Hero - Split (2 Images)",
       "category": "t:categories.banners",
-      "blocks": {
-        "spacer": {
-          "type": "spacer",
+      "blocks": [
+        {
+          "type": "media",
           "settings": {
-            "size": "pixel",
-            "pixel_size": 24
+            "media_type": "image",
+            "heading": "<p>Spring Collection</p>",
+            "heading_size": "h2",
+            "heading_font": "primary",
+            "heading_alignment": "center",
+            "button_label": "Shop Spring",
+            "button_link": ""
           }
         },
-        "marquee": {
-          "type": "_marquee",
-          "blocks": {
-            "text": {
-              "type": "text",
-              "settings": {
-                "text": "t:html_defaults.explore_latest_products",
-                "type_preset": "h1"
-              }
-            }
-          },
-          "block_order": ["text"]
-        },
-        "button": {
-          "type": "button",
+        {
+          "type": "media",
           "settings": {
-            "label": "t:text_defaults.shop_now_button_label",
-            "link": "shopify://collections/all"
+            "media_type": "image",
+            "heading": "<p>Summer Collection</p>",
+            "heading_size": "h2",
+            "heading_font": "primary",
+            "heading_alignment": "center",
+            "button_label": "Shop Summer",
+            "button_link": ""
           }
         }
-      },
-      "block_order": ["spacer", "marquee", "button"],
+      ],
       "settings": {
-        "horizontal_alignment_flex_direction_column": "center",
-        "vertical_alignment_flex_direction_column": "space-between",
-        "gap": 32,
-        "section_height": "large",
-        "color_scheme": "scheme-5",
-        "padding-block-start": 0,
-        "padding-block-end": 40,
-        "toggle_overlay": true,
-        "overlay_style": "gradient"
-      }
-    },
-    {
-      "name": "t:names.hero_bottom_aligned",
-      "category": "t:categories.banners",
-      "blocks": {
-        "group_main": {
-          "type": "group",
-          "name": "t:names.group",
-          "settings": {
-            "content_direction": "row",
-            "vertical_on_mobile": true,
-            "horizontal_alignment": "flex-start",
-            "vertical_alignment": "flex-end",
-            "align_baseline": true,
-            "horizontal_alignment_flex_direction_column": "flex-start",
-            "vertical_alignment_flex_direction_column": "center",
-            "gap": 18,
-            "width": "fill",
-            "custom_width": 100,
-            "width_mobile": "fill",
-            "custom_width_mobile": 100,
-            "height": "fit",
-            "custom_height": 100,
-            "inherit_color_scheme": true,
-            "color_scheme": "",
-            "background_media": "none",
-            "video_position": "cover",
-            "background_image_position": "cover",
-            "border": "none",
-            "border_width": 1,
-            "border_opacity": 100,
-            "border_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {
-            "content_group": {
-              "type": "group",
-              "name": "t:names.group",
-              "settings": {
-                "content_direction": "column",
-                "vertical_on_mobile": true,
-                "horizontal_alignment": "flex-start",
-                "vertical_alignment": "center",
-                "align_baseline": false,
-                "horizontal_alignment_flex_direction_column": "flex-start",
-                "vertical_alignment_flex_direction_column": "center",
-                "gap": 6,
-                "width": "custom",
-                "custom_width": 100,
-                "width_mobile": "fill",
-                "custom_width_mobile": 100,
-                "height": "fit",
-                "custom_height": 100,
-                "inherit_color_scheme": true,
-                "color_scheme": "",
-                "background_media": "none",
-                "video_position": "cover",
-                "background_image_position": "cover",
-                "border": "none",
-                "border_width": 1,
-                "border_opacity": 100,
-                "border_radius": 0,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {
-                "text_intro": {
-                  "type": "text",
-                  "name": "t:names.heading",
-                  "settings": {
-                    "text": "t:html_defaults.introducing_h2",
-                    "width": "100%",
-                    "max_width": "normal",
-                    "alignment": "left",
-                    "type_preset": "h6",
-                    "font": "var(--font-accent--family)",
-                    "font_size": "1rem",
-                    "line_height": "normal",
-                    "letter_spacing": "normal",
-                    "case": "none",
-                    "wrap": "pretty",
-                    "color": "",
-                    "background": false,
-                    "background_color": "#00000026",
-                    "corner_radius": 0,
-                    "padding-block-start": 0,
-                    "padding-block-end": 0,
-                    "padding-inline-start": 0,
-                    "padding-inline-end": 0
-                  }
-                },
-                "text_main": {
-                  "type": "text",
-                  "name": "t:names.heading",
-                  "settings": {
-                    "text": "t:html_defaults.new_arrivals_h1",
-                    "width": "100%",
-                    "max_width": "normal",
-                    "alignment": "left",
-                    "type_preset": "h2",
-                    "font": "var(--font-primary--family)",
-                    "font_size": "",
-                    "line_height": "normal",
-                    "letter_spacing": "normal",
-                    "case": "none",
-                    "wrap": "pretty",
-                    "color": "",
-                    "background": false,
-                    "background_color": "#00000026",
-                    "corner_radius": 0,
-                    "padding-block-start": 0,
-                    "padding-block-end": 0,
-                    "padding-inline-start": 0,
-                    "padding-inline-end": 0
-                  }
-                }
-              },
-              "block_order": ["text_intro", "text_main"]
-            },
-            "text_description": {
-              "type": "text",
-              "name": "t:names.text",
-              "settings": {
-                "text": "t:html_defaults.make_things_better_extended",
-                "width": "fit-content",
-                "max_width": "none",
-                "alignment": "left",
-                "type_preset": "rte",
-                "font": "var(--font-primary--family)",
-                "font_size": "",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "wrap": "pretty",
-                "color": "",
-                "background": false,
-                "background_color": "#00000026",
-                "corner_radius": 0,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              }
-            }
-          },
-          "block_order": ["content_group", "text_description"]
-        }
-      },
-      "block_order": ["group_main"],
-      "settings": {
-        "media_type_1": "image",
-        "horizontal_alignment_flex_direction_column": "center",
-        "vertical_alignment_flex_direction_column": "flex-end",
-        "gap": 16,
         "section_height": "large",
         "color_scheme": "scheme-5",
         "padding-block-start": 40,
